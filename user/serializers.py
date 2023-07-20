@@ -16,6 +16,7 @@ class RegisterSerializers(serializers.ModelSerializer):
 class LoginSerializers(serializers.Serializer):
     username = serializers.CharField(max_length=200, write_only=True)
     password = serializers.CharField(max_length=200, write_only=True)
+    id = serializers.IntegerField(read_only=True)
 
     def create(self, validated_data):
         user = authenticate(**validated_data)
