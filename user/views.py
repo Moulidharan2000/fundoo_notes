@@ -1,10 +1,4 @@
-import json
-
-from django.forms import model_to_dict
-from django.http import JsonResponse
-from .models import User
 from logs import logger
-from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from .serializers import RegisterSerializers, LoginSerializers
 from rest_framework.response import Response
@@ -36,3 +30,5 @@ class UserLogin(APIView):
         except Exception as ex:
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+
