@@ -13,3 +13,15 @@ class Notes(models.Model):
 
     class Meta:
         db_table = 'notes'
+
+
+class Label(models.Model):
+    name = models.CharField(max_length=200, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    color = models.CharField(max_length=200)
+    font = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = 'label'
+
+
