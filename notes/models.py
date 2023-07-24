@@ -10,6 +10,8 @@ class Notes(models.Model):
     remainder = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_archive = models.BooleanField(default=False)
+    is_trash = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'notes'
@@ -23,5 +25,3 @@ class Label(models.Model):
 
     class Meta:
         db_table = 'label'
-
-
