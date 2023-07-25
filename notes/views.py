@@ -10,7 +10,6 @@ from user.utils import verify_user
 from .utils import RedisNote
 
 
-# Create your views here.
 class NotesAPI(APIView):
     @verify_user
     def post(self, request):

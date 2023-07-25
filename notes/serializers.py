@@ -5,7 +5,8 @@ from .models import Notes, Label
 class NotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notes
-        fields = ['id', 'title', 'description', 'image', 'user', 'remainder', 'created_at', 'updated_at', 'is_archive', 'is_trash']
+        fields = ['id', 'title', 'description', 'image', 'user', 'remainder', 'created_at', 'updated_at', 'is_archive',
+                  'is_trash']
 
 
 class LabelSerializer(serializers.ModelSerializer):
