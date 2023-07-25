@@ -7,6 +7,7 @@ from logs import logger
 from .serializers import NotesSerializer, LabelSerializer
 from .models import Notes, Label
 from user.utils import verify_user
+from .utils import RedisNote
 
 
 # Create your views here.
@@ -17,6 +18,7 @@ class NotesAPI(APIView):
             serializer = NotesSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            RedisNote.save(request.data.get("user"), serializer.data)
             return Response({"message": "Notes Created", "status": 201, "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as ex:
@@ -26,10 +28,14 @@ class NotesAPI(APIView):
     @verify_user
     def get(self, request):
         try:
+            cache = RedisNote.retrive(request.data.get("user"))
+            if cache:
+                return Response({"message": "Cache Note Retrieved", "status": 200, "data": cache},
+                                status=status.HTTP_200_OK)
             notes = Notes.objects.filter(user=request.data.get("user"), is_archive=False, is_trash=False)
             serializer = NotesSerializer(notes, many=True)
-            return Response({"message": "Notes Retrieved", "status": 201, "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
+            return Response({"message": "Notes Retrieved", "status": 200, "data": serializer.data},
+                            status=status.HTTP_200_OK)
         except Exception as ex:
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
@@ -41,6 +47,7 @@ class NotesAPI(APIView):
             serializer = NotesSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            RedisNote.save(request.data.get("user"), serializer.data)
             return Response({"message": "Note Updated", "status": 200, "data": serializer.data},
                             status=status.HTTP_200_OK)
         except Exception as ex:
@@ -52,6 +59,7 @@ class NotesAPI(APIView):
         try:
             note = Notes.objects.get(id=request.data.get("id"), user=request.data.get("user"))
             note.delete()
+            RedisNote.delete(request.data.get("user"), request.data.get("id"))
             return Response({"message": "Note Deleted", "status": 200, "data": {}},
                             status=status.HTTP_200_OK)
         except Exception as ex:

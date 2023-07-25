@@ -25,3 +25,7 @@ class Label(models.Model):
 
     class Meta:
         db_table = 'label'
+
+
+
+# signals in django
