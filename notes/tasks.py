@@ -4,6 +4,6 @@ from django.conf import settings
 
 
 @shared_task()
-def send_mail(recipient):
-    sm(subject="mail send", message="fundoo notes", from_email=settings.EMAIL_HOST_USER, recipient_list=[recipient])
+def send_mail(recipient, title):
+    sm(subject="Notes remainder", message=title, from_email=settings.EMAIL_HOST_USER, recipient_list=[recipient])
     return "Mail Sent Successfully"

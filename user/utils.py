@@ -1,7 +1,10 @@
 import jwt
 from datetime import datetime, timedelta
-from .models import User
 
+from rest_framework import status
+
+from .models import User
+from rest_framework.response import Response
 
 class JWToken:
     @staticmethod
@@ -20,15 +23,18 @@ class JWToken:
 
 def verify_user(function):
     def wrapper(self, request, *args, **kwargs):
-        token = request.headers.get("Token")
-        if not token:
-            raise Exception("Token not Found")
-        payload = JWToken.to_decode(token)
-        if "user" not in payload.keys():
-            raise Exception("User not Found")
-        user = User.objects.filter(id=payload.get("user"))
-        if not user.exists():
-            raise Exception("User not Found")
-        request.data.update({"user": user.first().id})
-        return function(self, request, *args, **kwargs)
+        try:
+            token = request.headers.get("Token")
+            if not token:
+                raise Exception("Token not Found")
+            payload = JWToken.to_decode(token)
+            if "user" not in payload.keys():
+                raise Exception("User not Found")
+            user = User.objects.filter(id=payload.get("user"))
+            if not user.exists():
+                raise Exception("User not Found")
+            request.data.update({"user": user.first().id})
+            return function(self, request, *args, **kwargs)
+        except Exception as ex:
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
     return wrapper

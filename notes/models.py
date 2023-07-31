@@ -28,4 +28,3 @@ class Label(models.Model):
 
 
 
-# signals in django
