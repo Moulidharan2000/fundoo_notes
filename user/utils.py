@@ -1,10 +1,9 @@
 import jwt
 from datetime import datetime, timedelta
-
 from rest_framework import status
-
 from .models import User
 from rest_framework.response import Response
+
 
 class JWToken:
     @staticmethod
@@ -37,4 +36,5 @@ def verify_user(function):
             return function(self, request, *args, **kwargs)
         except Exception as ex:
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
     return wrapper

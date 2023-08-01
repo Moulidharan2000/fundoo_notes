@@ -5,7 +5,7 @@ from user.models import User
 class Notes(models.Model):
     title = models.CharField(max_length=200, null=True)
     description = models.TextField(null=True)
-    image = models.ImageField(null=True)
+    image = models.ImageField(null=True, upload_to='notes/images')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     remainder = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -16,6 +16,9 @@ class Notes(models.Model):
     class Meta:
         db_table = 'notes'
 
+    def __str__(self):
+        return self.title
+
 
 class Label(models.Model):
     name = models.CharField(max_length=200, null=True)
@@ -25,6 +28,3 @@ class Label(models.Model):
 
     class Meta:
         db_table = 'label'
-
-
-
