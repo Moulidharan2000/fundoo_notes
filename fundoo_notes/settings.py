@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'user',
     'rest_framework',
     'notes',
-    'django_celery_beat'
+    'django_celery_beat',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -147,3 +148,14 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 # MEDIA_URL = '/images/'
 # MEDIA_ROOT = os.path.join(BASE_DIR, "notes")
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'token',
+            'in': 'header'
+        }
+    }
+}

@@ -15,3 +15,15 @@ class LabelSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'user', 'color', 'font']
 
 
+class UpdateNoteSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    title = serializers.CharField(max_length=200)
+    description = serializers.CharField()
+    remainder = serializers.DateTimeField(required=False)
+
+
+class UpdateLabelSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    name = serializers.CharField(max_length=200)
+    color = serializers.CharField(max_length=200)
+    font = serializers.CharField(max_length=200)

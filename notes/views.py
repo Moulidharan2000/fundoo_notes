@@ -4,13 +4,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from logs import logger
-from .serializers import NotesSerializer, LabelSerializer
+from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer
 from .models import Notes, Label
 from user.utils import verify_user
 from .utils import RedisNote
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class NotesAPI(APIView):
+    @swagger_auto_schema(request_body=NotesSerializer, operation_summary="Create Note")
     @verify_user
     def post(self, request):
         try:
@@ -39,6 +42,7 @@ class NotesAPI(APIView):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=UpdateNoteSerializer, operation_summary="Update Note")
     @verify_user
     def put(self, request):
         try:
@@ -53,6 +57,10 @@ class NotesAPI(APIView):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)},
+                                                     required=["id"]),
+                         operation_summary="Delete Notes")
     @verify_user
     def delete(self, request):
         try:
@@ -67,6 +75,7 @@ class NotesAPI(APIView):
 
 
 class LabelAPI(APIView):
+    @swagger_auto_schema(request_body=LabelSerializer, operation_summary="Create Label")
     @verify_user
     def post(self, request):
         try:
@@ -89,6 +98,7 @@ class LabelAPI(APIView):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=UpdateLabelSerializer, operation_summary="Update Label")
     @verify_user
     def put(self, request):
         try:
@@ -102,6 +112,10 @@ class LabelAPI(APIView):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)},
+                                                     required=["id"]),
+                         operation_summary="Delete Label")
     @verify_user
     def delete(self, request):
         try:
@@ -126,6 +140,9 @@ class IsArchiveTrash(viewsets.ViewSet):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)}),
+                         operation_summary="Create Trash")
     @verify_user
     def create(self, request, *args, **kwargs):
         try:
@@ -138,6 +155,9 @@ class IsArchiveTrash(viewsets.ViewSet):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)}),
+                         operation_summary="Create Trash")
     @action(methods=["post"], detail=True)
     @verify_user
     def set_trash(self, request, *args, **kwargs):
