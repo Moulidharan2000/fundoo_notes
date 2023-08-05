@@ -27,3 +27,8 @@ class UpdateLabelSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200)
     color = serializers.CharField(max_length=200)
     font = serializers.CharField(max_length=200)
+
+
+class CollaboratorSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    collaborators = serializers.ListField(child=serializers.IntegerField())

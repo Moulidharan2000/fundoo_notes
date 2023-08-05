@@ -12,6 +12,7 @@ class Notes(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_archive = models.BooleanField(default=False)
     is_trash = models.BooleanField(default=False)
+    collaborators = models.ManyToManyField(User, related_name="collaborators")
 
     class Meta:
         db_table = 'notes'
@@ -28,3 +29,6 @@ class Label(models.Model):
 
     class Meta:
         db_table = 'label'
+
+
+

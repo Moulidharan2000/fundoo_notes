@@ -1,15 +1,18 @@
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from logs import logger
-from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer
+from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer, CollaboratorSerializer
 from .models import Notes, Label
 from user.utils import verify_user
 from .utils import RedisNote
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
+from django.db.models import Q
 
 
 class NotesAPI(APIView):
@@ -30,11 +33,12 @@ class NotesAPI(APIView):
     @verify_user
     def get(self, request):
         try:
-            cache = RedisNote.retrive(request.data.get("user"))
-            if cache:
-                return Response({"message": "Cache Note Retrieved", "status": 200, "data": cache},
-                                status=status.HTTP_200_OK)
-            notes = Notes.objects.filter(user=request.data.get("user"), is_archive=False, is_trash=False)
+            # cache = RedisNote.retrive(request.data.get("user"))
+            # if cache:
+            #     return Response({"message": "Cache Note Retrieved", "status": 200, "data": cache},
+            #                     status=status.HTTP_200_OK)
+            notes = Notes.objects.filter(Q(user=request.data.get("user")) | Q(collaborators__id=request.data.get("user")),
+                                         is_archive=False, is_trash=False).distinct("id")
             serializer = NotesSerializer(notes, many=True)
             return Response({"message": "Notes Retrieved", "status": 200, "data": serializer.data},
                             status=status.HTTP_200_OK)
@@ -182,3 +186,36 @@ class IsArchiveTrash(viewsets.ViewSet):
         except Exception as ex:
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotesCollaborators(GenericAPIView, CreateModelMixin, DestroyModelMixin):
+    queryset = Notes.objects.all()
+    serializer_class = CollaboratorSerializer
+
+    @swagger_auto_schema(request_body=CollaboratorSerializer,
+                         operation_summary=" Create Notes Collaborator")
+    @verify_user
+    def post(self, request, *args, **kwargs):
+        try:
+            note = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user"))
+            note.collaborators.add(*request.data.get("collaborators"))
+            note.save()
+            return Response({"message": "Collaborators Added", "status": 200, "data": {}},
+                            status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=CollaboratorSerializer,
+                         operation_summary=" Delete Notes Collaborator")
+    @verify_user
+    def delete(self, request, *args, **kwargs):
+        try:
+            note = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user"))
+            note.collaborators.remove(*request.data.get("collaborators"))
+            return Response({"message": "Collaborator Note Deleted", "status": 200, "data": {}},
+                            status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
