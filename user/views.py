@@ -8,8 +8,6 @@ from drf_yasg.utils import swagger_auto_schema
 
 
 class UserRegistration(APIView):
-
-    # Create your views here.
     @swagger_auto_schema(request_body=RegisterSerializers)
     def post(self, request):
         try:
@@ -24,7 +22,6 @@ class UserRegistration(APIView):
 
 
 class UserLogin(APIView):
-
     @swagger_auto_schema(request_body=LoginSerializers)
     def post(self, request):
         try:

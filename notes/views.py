@@ -1,3 +1,6 @@
+import json
+
+from django.db import connection
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
@@ -5,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from logs import logger
-from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer, CollaboratorSerializer
+from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer, \
+    CollaboratorSerializer
 from .models import Notes, Label
 from user.utils import verify_user
 from .utils import RedisNote
@@ -37,8 +41,9 @@ class NotesAPI(APIView):
             # if cache:
             #     return Response({"message": "Cache Note Retrieved", "status": 200, "data": cache},
             #                     status=status.HTTP_200_OK)
-            notes = Notes.objects.filter(Q(user=request.data.get("user")) | Q(collaborators__id=request.data.get("user")),
-                                         is_archive=False, is_trash=False).distinct("id")
+            notes = Notes.objects.filter(
+                Q(user=request.data.get("user")) | Q(collaborators__id=request.data.get("user")),
+                is_archive=False, is_trash=False).distinct("id")
             serializer = NotesSerializer(notes, many=True)
             return Response({"message": "Notes Retrieved", "status": 200, "data": serializer.data},
                             status=status.HTTP_200_OK)
@@ -219,3 +224,68 @@ class NotesCollaborators(GenericAPIView, CreateModelMixin, DestroyModelMixin):
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class LabelRaw(APIView):
+    @swagger_auto_schema(request_body=LabelSerializer, operation_summary="Create Label")
+    @verify_user
+    def post(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT into label (name, user_id, color, font) VALUES(%s, %s, %s, %s)",
+                               [request.data.get("name"), request.data.get("user"),
+                                request.data.get("color"), request.data.get("font")])
+                cursor.execute("SELECT * from label order by id desc limit 1")
+                row = cursor.fetchone()
+                column = [x[0] for x in cursor.description]
+                result = dict(zip(column, row))
+                return Response({"message": "Notes Created", "status": 201, "data": result},
+                                status=status.HTTP_201_CREATED)
+        except Exception as ex:
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @verify_user
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * from label where user_id=%s", [request.data.get("user")])
+                row = cursor.fetchall()
+                column = [x[0] for x in cursor.description]
+                result = [dict(zip(column, x)) for x in row]
+                return Response({"message": "Labels Retrieved", "status": 201, "data": result},
+                                status=status.HTTP_201_CREATED)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=UpdateLabelSerializer, operation_summary="Update Label")
+    @verify_user
+    def put(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("UPDATE label SET  name=%s, color=%s, font=%s where id=%s and user_id=%s",
+                               [request.data.get("name"), request.data.get("color"),
+                                request.data.get("font"), request.data.get("id"), request.data.get("user")])
+                cursor.execute("SELECT * from label where id=%s", [request.data.get("id")])
+                row = cursor.fetchone()
+                column = [x[0] for x in cursor.description]
+                result = dict(zip(column, row))
+                return Response({"message": "Label Updated", "status": 200, "data": result},
+                                status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)},
+                                                     required=["id"]),
+                         operation_summary="Delete Label")
+    @verify_user
+    def delete(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE from label where id=%s", [request.data.get("id")])
+                return Response({"message": "Label Deleted", "status": 200, "data": {}},
+                                status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
