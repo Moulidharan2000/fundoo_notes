@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from logs import logger
-from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, UpdateLabelSerializer, \
-    CollaboratorSerializer
+from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer,\
+    UpdateLabelSerializer, CollaboratorSerializer, LabelCollaboratorSerializer
 from .models import Notes, Label
 from user.utils import verify_user
 from .utils import RedisNote
@@ -77,60 +77,6 @@ class NotesAPI(APIView):
             note.delete()
             RedisNote.delete(request.data.get("user"), request.data.get("id"))
             return Response({"message": "Note Deleted", "status": 200, "data": {}},
-                            status=status.HTTP_200_OK)
-        except Exception as ex:
-            logger.exception(ex)
-            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LabelAPI(APIView):
-    @swagger_auto_schema(request_body=LabelSerializer, operation_summary="Create Label")
-    @verify_user
-    def post(self, request):
-        try:
-            serializer = LabelSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({"message": "Label Created", "status": 201, "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
-        except Exception as ex:
-            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
-
-    @verify_user
-    def get(self, request):
-        try:
-            labels = Label.objects.filter(id=request.data.get("id"), user=request.data.get("user"))
-            serializer = LabelSerializer(labels, many=True)
-            return Response({"message": "Labels Retrieved", "status": 201, "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
-        except Exception as ex:
-            logger.exception(ex)
-            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(request_body=UpdateLabelSerializer, operation_summary="Update Label")
-    @verify_user
-    def put(self, request):
-        try:
-            label = Label.objects.get(id=request.data.get("id"), user=request.data.get("user"))
-            serializer = LabelSerializer(label, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({"message": "Label Updated", "status": 200, "data": serializer.data},
-                            status=status.HTTP_200_OK)
-        except Exception as ex:
-            logger.exception(ex)
-            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
-                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)},
-                                                     required=["id"]),
-                         operation_summary="Delete Label")
-    @verify_user
-    def delete(self, request):
-        try:
-            label = Label.objects.get(id=request.data.get("id"), user=request.data.get("user"))
-            label.delete()
-            return Response({"message": "Label Deleted", "status": 200, "data": {}},
                             status=status.HTTP_200_OK)
         except Exception as ex:
             logger.exception(ex)
@@ -225,6 +171,60 @@ class NotesCollaborators(GenericAPIView, CreateModelMixin, DestroyModelMixin):
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class LabelAPI(APIView):
+    @swagger_auto_schema(request_body=LabelSerializer, operation_summary="Create Label")
+    @verify_user
+    def post(self, request):
+        try:
+            serializer = LabelSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"message": "Label Created", "status": 201, "data": serializer.data},
+                            status=status.HTTP_201_CREATED)
+        except Exception as ex:
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @verify_user
+    def get(self, request):
+        try:
+            labels = Label.objects.filter(id=request.data.get("id"), user=request.data.get("user"))
+            serializer = LabelSerializer(labels, many=True)
+            return Response({"message": "Labels Retrieved", "status": 201, "data": serializer.data},
+                            status=status.HTTP_201_CREATED)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=UpdateLabelSerializer, operation_summary="Update Label")
+    @verify_user
+    def put(self, request):
+        try:
+            label = Label.objects.get(id=request.data.get("id"), user=request.data.get("user"))
+            serializer = LabelSerializer(label, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"message": "Label Updated", "status": 200, "data": serializer.data},
+                            status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={"id": openapi.Schema(type=openapi.TYPE_INTEGER)},
+                                                     required=["id"]),
+                         operation_summary="Delete Label")
+    @verify_user
+    def delete(self, request):
+        try:
+            label = Label.objects.get(id=request.data.get("id"), user=request.data.get("user"))
+            label.delete()
+            return Response({"message": "Label Deleted", "status": 200, "data": {}},
+                            status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class LabelRaw(APIView):
     @swagger_auto_schema(request_body=LabelSerializer, operation_summary="Create Label")
     @verify_user
@@ -286,6 +286,38 @@ class LabelRaw(APIView):
                 cursor.execute("DELETE from label where id=%s", [request.data.get("id")])
                 return Response({"message": "Label Deleted", "status": 200, "data": {}},
                                 status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LabelCollaborators(GenericAPIView, CreateModelMixin, DestroyModelMixin):
+    queryset = Notes.objects.all()
+    serializer_class = LabelCollaboratorSerializer
+
+    @swagger_auto_schema(request_body=LabelCollaboratorSerializer,
+                         operation_summary=" Create Label Collaborator")
+    @verify_user
+    def post(self, request, *args, **kwargs):
+        try:
+            notes = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user"))
+            notes.label.add(*request.data.get("labels"))
+            notes.save()
+            return Response({"message": "Label Added to Note", "status": 200, "data": {}},
+                            status=status.HTTP_200_OK)
+        except Exception as ex:
+            logger.exception(ex)
+            return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=LabelCollaboratorSerializer,
+                         operation_summary=" Delete Label Collaborator")
+    @verify_user
+    def delete(self, request, *args, **kwargs):
+        try:
+            note = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user"))
+            note.label.remove(*request.data.get("labels"))
+            return Response({"message": "Note Label Deleted", "status": 200, "data": {}},
+                            status=status.HTTP_200_OK)
         except Exception as ex:
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)

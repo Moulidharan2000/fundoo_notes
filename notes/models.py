@@ -13,6 +13,7 @@ class Notes(models.Model):
     is_archive = models.BooleanField(default=False)
     is_trash = models.BooleanField(default=False)
     collaborators = models.ManyToManyField(User, related_name="collaborators")
+    label = models.ManyToManyField("Label", related_name= "label")
 
     class Meta:
         db_table = 'notes'

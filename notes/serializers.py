@@ -32,3 +32,8 @@ class UpdateLabelSerializer(serializers.Serializer):
 class CollaboratorSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
     collaborators = serializers.ListField(child=serializers.IntegerField())
+
+
+class LabelCollaboratorSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    labels = serializers.ListField(child=serializers.IntegerField())
