@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from logs import logger
-from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer,\
+from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, \
     UpdateLabelSerializer, CollaboratorSerializer, LabelCollaboratorSerializer
 from .models import Notes, Label
 from user.utils import verify_user
@@ -189,8 +189,8 @@ class LabelAPI(APIView):
         try:
             labels = Label.objects.filter(id=request.data.get("id"), user=request.data.get("user"))
             serializer = LabelSerializer(labels, many=True)
-            return Response({"message": "Labels Retrieved", "status": 201, "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
+            return Response({"message": "Labels Retrieved", "status": 200, "data": serializer.data},
+                            status=status.HTTP_200_OK)
         except Exception as ex:
             logger.exception(ex)
             return Response({"message": str(ex), "status": 400, "data": {}}, status=status.HTTP_400_BAD_REQUEST)
