@@ -32,6 +32,7 @@ class UpdateLabelSerializer(serializers.Serializer):
 class CollaboratorSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
     collaborators = serializers.ListField(child=serializers.IntegerField())
+    access_type = serializers.CharField(max_length=200, default="read_only")
 
 
 class LabelCollaboratorSerializer(serializers.Serializer):

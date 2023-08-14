@@ -10,7 +10,7 @@ from rest_framework import viewsets
 from logs import logger
 from .serializers import NotesSerializer, LabelSerializer, UpdateNoteSerializer, \
     UpdateLabelSerializer, CollaboratorSerializer, LabelCollaboratorSerializer
-from .models import Notes, Label
+from .models import Notes, Label, Collaborators
 from user.utils import verify_user
 from .utils import RedisNote
 from drf_yasg.utils import swagger_auto_schema
@@ -55,7 +55,14 @@ class NotesAPI(APIView):
     @verify_user
     def put(self, request):
         try:
-            note = Notes.objects.get(id=request.data.get("id"), user=request.data.get("user"))
+            note = Notes.objects.filter(id=request.data.get("id"), user=request.data.get("user"))
+            if not note.exists():
+                note = Notes.objects.filter(note__note_id=request.data.get("id"), note__user_id=request.data.get("user"),
+                                            note__access_type="writable")
+            if not note.exists():
+                raise Exception("Not Authorized to perform update")
+            note = note.first()
+            request.data["user"] = note.user_id
             serializer = NotesSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -149,8 +156,13 @@ class NotesCollaborators(GenericAPIView, CreateModelMixin, DestroyModelMixin):
     def post(self, request, *args, **kwargs):
         try:
             note = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user"))
-            note.collaborators.add(*request.data.get("collaborators"))
-            note.save()
+            # note.collaborators.remove(*request.data.get("collaborators"))
+            # note.collaborators.add(*request.data.get("collaborators"),
+            #                        through_defaults={"access_type": request.data.get("access_type")})
+            # note.save()
+            for i in request.data.get("collaborators"):
+                Collaborators.objects.update_or_create(note_id=note.id, user_id=i,
+                                                       defaults={"access_type": request.data.get("access_type")})
             return Response({"message": "Collaborators Added", "status": 200, "data": {}},
                             status=status.HTTP_200_OK)
         except Exception as ex:
